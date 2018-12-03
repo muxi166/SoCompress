@@ -1,0 +1,28 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion gradle.version.compileSdkVersion
+    defaultConfig {
+        applicationId "com.hangman"
+        minSdkVersion gradle.version.minSdkVersion
+        targetSdkVersion gradle.version.targetSdkVersion
+        versionCode gradle.appInfo.versionCode
+        versionName gradle.appInfo.versionName
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation gradle.library.appCompat
+    implementation gradle.library.constraintLayout
+    testImplementation gradle.library.testUnit
+    androidTestImplementation gradle.library.testRunner
+    androidTestImplementation gradle.library.testEspresso
+}

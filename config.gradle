@@ -1,0 +1,24 @@
+gradle.ext.appInfo = [
+        versionCode: 1,
+        versionName: '1.0',
+]
+
+gradle.ext.version = [
+        compileSdkVersion: 28,
+        minSdkVersion    : 21,
+        targetSdkVersion : 28,
+]
+
+gradle.ext.classpath = [
+        gradleBuild: 'com.android.tools.build:gradle:3.2.1',
+        aspectJTools    : "org.aspectj:aspectjtools:1.8.1",
+]
+
+gradle.ext.library = [
+        appCompat       : 'com.android.support:appcompat-v7:28.0.0',
+        constraintLayout: 'com.android.support.constraint:constraint-layout:1.1.3',
+        testUnit        : 'junit:junit:4.12',
+        testRunner      : 'com.android.support.test:runner:1.0.2',
+        testEspresso    : 'com.android.support.test.espresso:espresso-core:3.0.2',
+        aspectJLibrary  : "org.aspectj:aspectjrt:1.8.1"
+]
