@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+//apply plugin: 'com.hangman.socompressplugin'
 
 android {
     compileSdkVersion gradle.version.compileSdkVersion
@@ -26,3 +27,8 @@ dependencies {
     androidTestImplementation gradle.library.testRunner
     androidTestImplementation gradle.library.testEspresso
 }
+
+//soCompressConfig {
+//    printLog = true
+//    debugModeEnable = true
+//}

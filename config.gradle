@@ -10,8 +10,8 @@ gradle.ext.version = [
 ]
 
 gradle.ext.classpath = [
-        gradleBuild: 'com.android.tools.build:gradle:3.2.1',
-        aspectJTools    : "org.aspectj:aspectjtools:1.8.1",
+        gradleBuild : 'com.android.tools.build:gradle:3.2.1',
+        aspectJTools: "org.aspectj:aspectjtools:1.8.1",
 ]
 
 gradle.ext.library = [
@@ -20,5 +20,7 @@ gradle.ext.library = [
         testUnit        : 'junit:junit:4.12',
         testRunner      : 'com.android.support.test:runner:1.0.2',
         testEspresso    : 'com.android.support.test.espresso:espresso-core:3.0.2',
-        aspectJLibrary  : "org.aspectj:aspectjrt:1.8.1"
+        aspectJLibrary  : "org.aspectj:aspectjrt:1.8.1",
+        commoncompress  : 'org.apache.commons:commons-compress:1.18',
+        xz              : 'org.tukaani:xz:1.8'
 ]

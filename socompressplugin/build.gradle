@@ -1,0 +1,29 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+dependencies {
+    implementation gradleApi()
+    implementation localGroovy()
+    implementation gradle.library.commoncompress
+    implementation gradle.library.xz
+}
+repositories {
+    mavenCentral()
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.version = '1.0.0'
+            pom.artifactId = 'socompressplugin'
+            pom.groupId = 'com.hangman.plugin'
+
+            repository(url: uri("$project.rootDir/maven"))
+        }
+    }
+}
+compileGroovy {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+    options.encoding = "UTF-8"
+}
