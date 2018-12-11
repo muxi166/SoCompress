@@ -112,7 +112,7 @@ class SoCompressTask extends DefaultTask {
             throw new IllegalArgumentException("compressTar, these file (${notExistFileList}) not exist in lib dir ")
         }
         // 压缩文件列表为一个tar包
-        def info = Utils.tarFileList(tarFileArray, soCompressDir, config)
+        def info = CompressionUtil.tarFileList(tarFileArray, soCompressDir, config)
         map.put(info.fileName, info)
     }
 
@@ -149,7 +149,7 @@ class SoCompressTask extends DefaultTask {
             throw new IllegalArgumentException("compressSoFileArray, but these file (${notExistFileList}) not exist in lib dir ")
         }
         fileList.each { file ->
-            def info = Utils.compressSoFile(file, soCompressDir, config.algorithm, config.verify, config.printLog)
+            def info = CompressionUtil.compressSoFile(file, soCompressDir, config.algorithm, config.verify, config.printLog)
             map.put(file.name, info)
         }
     }

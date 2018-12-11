@@ -12,7 +12,7 @@ import org.apache.commons.compress.utils.IOUtils
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
-class Utils {
+class CompressionUtil {
 
     static def tarFileList(List<File> fileList, File outputDir, SoCompressConfig config) {
         def time = System.currentTimeMillis()
@@ -27,7 +27,7 @@ class Utils {
         def tarFileName = getMD5(sb.toString())
 
         TarArchiveOutputStream tarArchiveOutputStream = null
-        File tarFile = new File(outputDir, "${tarFileName}-tar")
+        File tarFile = new File(outputDir, "${tarFileName}.tar")
         try {
             tarArchiveOutputStream = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, new FileOutputStream(tarFile))
             fileList.forEach() { file ->
