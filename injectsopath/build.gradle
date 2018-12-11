@@ -27,11 +27,6 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-
-    implementation gradle.library.appCompat
-    testImplementation gradle.library.testUnit
-    androidTestImplementation gradle.library.testRunner
-    androidTestImplementation gradle.library.testEspresso
     implementation gradle.library.kotlin
     implementation gradle.library.commoncompress
     implementation gradle.library.xz
@@ -53,9 +48,9 @@ allprojects {
 
 }
 
-group = "com.hangman.plugin"
-version = "1.0.1"
-project.archivesBaseName = "injectsopath"
+group = "com.hangman.library"
+version = "1.0.0"
+project.archivesBaseName = "NativeLibDecompression"
 
 def siteUrl = 'https://github.com/HangmanFu/SoCompress'
 def gitUrl = 'https://github.com/HangmanFu/SoCompress.git'
@@ -63,10 +58,22 @@ def gitUrl = 'https://github.com/HangmanFu/SoCompress.git'
 install {
     repositories.mavenInstaller {
         // This generates POM.xml with proper parameters
-        pom {
-            project {
+
+        //generate pom nodes for dependencies
+        pom.withXml {
+            def dependenciesNode = asNode().appendNode('dependencies')
+            configurations.implementation.allDependencies.each { dependency ->
+                if (dependency.name == 'xz' || dependency.name == 'commons-compress') {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', dependency.group)
+                    dependencyNode.appendNode('artifactId', dependency.name)
+                    dependencyNode.appendNode('version', dependency.version)
+                }
+            }
+        }
+        pom.project {
                 packaging 'aar'
-                name 'android so decompression and inject native lib path'     //项目的描述 你可以多写一点
+                name 'android so decompression and decompression native lib path'     //项目的描述 你可以多写一点
                 url siteUrl
                 licenses {
                     license {
@@ -86,9 +93,10 @@ install {
                     developerConnection gitUrl
                     url siteUrl
                 }
+
             }
         }
-    }
+
 }
 
 
@@ -126,8 +134,8 @@ bintray {
     key = properties.getProperty("bintray.apikey")
     configurations = ['archives']
     pkg {
-        repo = "SoCompress"
-        name = "SoCompress"
+        repo = "AndroidNativeLibCompression"
+        name = "NativeLibDecompression"
         websiteUrl = siteUrl
         vcsUrl = gitUrl
         licenses = ["Apache-2.0"]

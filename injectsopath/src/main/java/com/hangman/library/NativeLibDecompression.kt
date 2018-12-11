@@ -13,39 +13,39 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.concurrent.Executors
 
-class InjectLibSoPath(private val context: Context, private val algorithm: String, private val printLog: Boolean) {
+class NativeLibDecompression(private val context: Context, private val algorithm: String, private val printLog: Boolean) {
 
-    var tarDecompression: Long = 0
-    var soDecompression: Long = 0
-    var totalCost: Long = 0
+    private var tarDecompression: Long = 0
+    private var soDecompression: Long = 0
     private val threadPool = Executors.newSingleThreadExecutor()
 
     companion object {
         const val SO_DECOMPRESSION = "so_decompressed"
         const val SO_COMPRESSED = "so_compressed"
         const val TAR = "tar"
-        const val TAG = "InjectLibSoPath"
+        const val TAG = "NativeLibDecompression"
     }
 
     private lateinit var spInterface: SpInterface
     private var decompressionCallback: DecompressionCallback? = null
     private var logInterface: LogInterface? = null
 
-    fun inject(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
-        val time = System.currentTimeMillis()
+    fun decompression(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
+        var time = System.currentTimeMillis()
         this.spInterface = spInterface
         this.logInterface = logInterface
         this.decompressionCallback = decompressionCallback
         threadPool.execute {
             shouldDecompression()
+            val cost = System.currentTimeMillis() - time
+            logInterface?.logV(TAG, "NativeLibDecompression after shouldDecompression cost $cost")
         }
-        val cost = System.currentTimeMillis() - time
-        logInterface?.logV(TAG, "InjectLibSoPath after shouldDecompression cost $cost")
+        time = System.currentTimeMillis()
         if (isMainProcess()) {
             injectExtraSoFilePath()
         }
-        totalCost = System.currentTimeMillis() - time
-        logInterface?.logV(TAG, "InjectLibSoPath after shouldDecompression totalCost $totalCost")
+        val cost = System.currentTimeMillis() - time
+        logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost")
     }
 
     private fun shouldDecompression() {
