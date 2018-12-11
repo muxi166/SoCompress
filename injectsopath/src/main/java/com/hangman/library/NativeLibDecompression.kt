@@ -38,10 +38,10 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         threadPool.execute {
             shouldDecompression()
             val cost = System.currentTimeMillis() - time
-            logInterface?.logV(TAG, "NativeLibDecompression after shouldDecompression cost $cost")
+            logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
         }
         time = System.currentTimeMillis()
-        if (isMainProcess()) {
+        if (isMainProcess(context.applicationContext.packageName)) {
             injectExtraSoFilePath()
         }
         val cost = System.currentTimeMillis() - time
@@ -50,6 +50,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
 
     private fun shouldDecompression() {
         val pathList = context.applicationContext.assets.list(SO_COMPRESSED)
+        var decompressed = false
         pathList?.forEach { pathName ->
             if (printLog) {
                 logInterface?.logV(TAG, "pathName $pathName")
@@ -61,6 +62,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     val originMD5 = namePieces[1]
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
+                        decompressed = true
                         if (printLog) {
                             logInterface?.logV(TAG, "shouldDecompression tarDecompression $pathName")
                         }
@@ -72,6 +74,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     val originMD5 = namePieces[1]
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
+                        decompressed = true
                         if (printLog) {
                             logInterface?.logV(TAG, "shouldDecompression soDecompression $pathName")
                         }
@@ -80,7 +83,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                 }
             }
         }
-        decompressionCallback?.decompression(true)
+        decompressionCallback?.decompression(true, decompressed)
     }
 
     private fun injectExtraSoFilePath() {
@@ -138,7 +141,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             val originMD5 = splits[1]
             spInterface.saveString(fileName, originMD5)
         } catch (e: Exception) {
-            decompressionCallback?.decompression(false)
+            decompressionCallback?.decompression(false, true)
         }
 
     }
@@ -184,7 +187,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             if (printLog) {
                 logInterface?.logE(TAG, "fileDecompression error: $e")
             }
-            decompressionCallback?.decompression(false)
+            decompressionCallback?.decompression(false, true)
         }
         return file
     }
@@ -234,9 +237,12 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     }
 
     @SuppressWarnings("all")
-    fun isMainProcess(): Boolean {
-        val packageName = context.applicationContext.packageName
-        return packageName == getCurrentProcessName()
+    fun isMainProcess(packageName: String): Boolean {
+        val result = packageName == getCurrentProcessName()
+        if (printLog && result) {
+            logInterface?.logV(TAG, "processName $packageName")
+        }
+        return result
     }
 
     private fun getCurrentProcessName(): String? {
@@ -247,9 +253,6 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         taskList.forEach { info ->
             if (info.pid == myPid) {
                 processName = info.processName
-                if (printLog) {
-                    logInterface?.logV(TAG, "processName $processName")
-                }
                 return processName
             }
         }
