@@ -1,5 +1,6 @@
 package com.hangman.library
 
+import android.app.ActivityManager
 import android.content.Context
 import android.text.TextUtils
 import org.apache.commons.compress.archivers.ArchiveException
@@ -10,12 +11,14 @@ import org.apache.commons.compress.utils.IOUtils
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.util.concurrent.Executors
 
 class InjectLibSoPath(private val context: Context, private val algorithm: String, private val printLog: Boolean) {
 
     var tarDecompression: Long = 0
     var soDecompression: Long = 0
     var totalCost: Long = 0
+    private val threadPool = Executors.newSingleThreadExecutor()
 
     companion object {
         const val SO_DECOMPRESSION = "so_decompressed"
@@ -25,16 +28,22 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
     }
 
     private lateinit var spInterface: SpInterface
+    private var decompressionCallback: DecompressionCallback? = null
     private var logInterface: LogInterface? = null
 
-    fun inject(spInterface: SpInterface, logInterface: LogInterface?) {
+    fun inject(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
         val time = System.currentTimeMillis()
         this.spInterface = spInterface
         this.logInterface = logInterface
-        shouldDecompression()
+        this.decompressionCallback = decompressionCallback
+        threadPool.execute {
+            shouldDecompression()
+        }
         val cost = System.currentTimeMillis() - time
         logInterface?.logV(TAG, "InjectLibSoPath after shouldDecompression cost $cost")
-        injectExtraSoFilePath()
+        if (isMainProcess()) {
+            injectExtraSoFilePath()
+        }
         totalCost = System.currentTimeMillis() - time
         logInterface?.logV(TAG, "InjectLibSoPath after shouldDecompression totalCost $totalCost")
     }
@@ -71,6 +80,7 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
                 }
             }
         }
+        decompressionCallback?.decompression(true)
     }
 
     private fun injectExtraSoFilePath() {
@@ -93,7 +103,7 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
             logInterface?.logV(TAG, "IllegalAccessException $e")
         } catch (e: IOException) {
             logInterface?.logV(TAG, "IOException $e")
-        } catch (e : java.lang.Exception) {
+        } catch (e: java.lang.Exception) {
             logInterface?.logV(TAG, "Exception $e")
         }
         if (printLog) {
@@ -128,6 +138,7 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
             val originMD5 = splits[1]
             spInterface.saveString(fileName, originMD5)
         } catch (e: Exception) {
+            decompressionCallback?.decompression(false)
         }
 
     }
@@ -173,6 +184,7 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
             if (printLog) {
                 logInterface?.logE(TAG, "fileDecompression error: $e")
             }
+            decompressionCallback?.decompression(false)
         }
         return file
     }
@@ -219,6 +231,28 @@ class InjectLibSoPath(private val context: Context, private val algorithm: Strin
                 logInterface?.logE(TAG, "IOException $e")
             }
         }
+    }
 
+    @SuppressWarnings("all")
+    fun isMainProcess(): Boolean {
+        val packageName = context.applicationContext.packageName
+        return packageName == getCurrentProcessName()
+    }
+
+    private fun getCurrentProcessName(): String? {
+        val myPid = android.os.Process.myPid()
+        val activityManager = context.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val taskList = activityManager.runningAppProcesses
+        var processName: String? = null
+        taskList.forEach { info ->
+            if (info.pid == myPid) {
+                processName = info.processName
+                if (printLog) {
+                    logInterface?.logV(TAG, "processName $processName")
+                }
+                return processName
+            }
+        }
+        return processName
     }
 }

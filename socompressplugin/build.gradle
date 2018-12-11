@@ -1,7 +1,7 @@
 apply plugin: 'groovy'
-apply plugin: 'maven'
 
-apply from: '../bintray.gradle'
+apply from: 'localMaven.gradle'
+apply from: 'bintray.gradle'
 
 dependencies {
     implementation gradleApi()
@@ -13,17 +13,7 @@ repositories {
     mavenCentral()
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            pom.version = '1.0.0'
-            pom.artifactId = 'socompressplugin'
-            pom.groupId = 'com.hangman.plugin'
 
-            repository(url: uri("$project.rootDir/maven"))
-        }
-    }
-}
 compileGroovy {
     sourceCompatibility = 1.7
     targetCompatibility = 1.7

@@ -1,0 +1,11 @@
+apply plugin: 'maven'
+
+//发布在本地
+uploadArchives {
+    repositories.mavenDeployer {
+        repository(url: uri("${rootProject.rootDir}/maven"))
+        pom.version = '1.0.0'
+        pom.artifactId = 'socompressplugin'
+        pom.groupId = 'com.hangman.plugin'
+    }
+}
