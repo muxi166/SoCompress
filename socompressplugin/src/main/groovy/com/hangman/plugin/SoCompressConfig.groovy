@@ -4,7 +4,6 @@ class SoCompressConfig {
     public String[] tarFileNameArray
     public String[] compressFileNameArray
     public String algorithm
-    public String compressDirName
     public boolean debugModeEnable
     public boolean printLog
     public boolean verify
@@ -13,7 +12,6 @@ class SoCompressConfig {
         tarFileNameArray = []
         compressFileNameArray = []
         algorithm = 'lzma'
-        compressDirName = 'so_compressed'
         debugModeEnable = false
         printLog = false
         verify = true
@@ -41,14 +39,6 @@ class SoCompressConfig {
 
     void setAlgorithm(String algorithm) {
         this.algorithm = algorithm
-    }
-
-    String getCompressDirName() {
-        return compressDirName
-    }
-
-    void setCompressDirName(String compressDirName) {
-        this.compressDirName = compressDirName
     }
 
     boolean getDebugModeEnable() {
@@ -80,7 +70,6 @@ class SoCompressConfig {
         """| tarFileName = ${tarFileNameArray}
            | compressFileName = ${compressFileNameArray}
            | algorithm = ${algorithm}
-           | compressDirName = ${compressDirName} 
            | debugModeEnable = ${debugModeEnable}
            | printLog = ${printLog}
            | verify = ${verify} 

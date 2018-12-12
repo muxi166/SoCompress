@@ -2,6 +2,7 @@ package com.hangman.library
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Handler
 import android.text.TextUtils
 import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.commons.compress.archivers.ArchiveStreamFactory
@@ -12,6 +13,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
 
 class NativeLibDecompression(private val context: Context, private val algorithm: String, private val printLog: Boolean) {
 
@@ -31,21 +33,29 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     private var logInterface: LogInterface? = null
 
     fun decompression(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
-        var time = System.currentTimeMillis()
-        this.spInterface = spInterface
-        this.logInterface = logInterface
-        this.decompressionCallback = decompressionCallback
-        threadPool.execute {
-            shouldDecompression()
-            val cost = System.currentTimeMillis() - time
-            logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
-        }
-        time = System.currentTimeMillis()
         if (isMainProcess(context.applicationContext.packageName)) {
-            injectExtraSoFilePath()
+            if (printLog) {
+                logInterface?.logE(TAG, "======= decompression function invoke ======")
+            }
+            val time = System.currentTimeMillis()
+            this.spInterface = spInterface
+            this.logInterface = logInterface
+            this.decompressionCallback = decompressionCallback
+            val handler = Handler(context.applicationContext.mainLooper)
+
+            threadPool.execute {
+                shouldDecompression()
+                val cost = System.currentTimeMillis() - time
+                logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
+
+                handler.post {
+                    val time1 = System.currentTimeMillis()
+                    injectExtraSoFilePath()
+                    val cost1 = System.currentTimeMillis() - time1
+                    logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost1 ")
+                }
+            }
         }
-        val cost = System.currentTimeMillis() - time
-        logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost")
     }
 
     private fun shouldDecompression() {
@@ -53,7 +63,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         var decompressed = false
         pathList?.forEach { pathName ->
             if (printLog) {
-                logInterface?.logV(TAG, "pathName $pathName")
+                logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $pathName")
             }
             val namePieces = pathName.split("-")
             when (namePieces.contains(TAR)) {
@@ -63,10 +73,10 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
                         decompressed = true
-                        if (printLog) {
-                            logInterface?.logV(TAG, "shouldDecompression tarDecompression $pathName")
-                        }
                         tarDecompression(pathName)
+                        if (printLog) {
+                            logInterface?.logV(TAG, "methodName = shouldDecompression tarDecompression $pathName")
+                        }
                     }
                 }
                 false -> {
@@ -75,10 +85,10 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
                         decompressed = true
-                        if (printLog) {
-                            logInterface?.logV(TAG, "shouldDecompression soDecompression $pathName")
-                        }
                         soDecompression(pathName)
+                        if (printLog) {
+                            logInterface?.logV(TAG, "methodName = shouldDecompression soDecompression $pathName")
+                        }
                     }
                 }
             }

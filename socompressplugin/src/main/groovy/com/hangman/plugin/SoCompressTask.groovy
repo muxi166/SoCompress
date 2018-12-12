@@ -87,7 +87,7 @@ class SoCompressTask extends DefaultTask {
         if (printLog) {
             println "compress tar file list ${fileNameSet}"
         }
-        def soCompressDir = new File(libOutputFileDir, config.compressDirName)
+        def soCompressDir = new File(libOutputFileDir, 'so_compressed')
         if (!soCompressDir.exists()) {
             soCompressDir.mkdirs()
         }
@@ -124,7 +124,7 @@ class SoCompressTask extends DefaultTask {
         if (printLog) {
             println "compress file list ${fileNameSet}"
         }
-        def soCompressDir = new File(libOutputFileDir, config.compressDirName)
+        def soCompressDir = new File(libOutputFileDir, 'so_compressed')
         if (!soCompressDir.exists()) {
             soCompressDir.mkdirs()
         }
