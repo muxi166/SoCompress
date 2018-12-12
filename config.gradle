@@ -5,7 +5,7 @@ gradle.ext.appInfo = [
 
 gradle.ext.version = [
         compileSdkVersion: 28,
-        minSdkVersion    : 21,
+        minSdkVersion    : 18,
         targetSdkVersion : 28,
 ]
 

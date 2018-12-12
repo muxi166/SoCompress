@@ -49,7 +49,7 @@ allprojects {
 }
 
 group = "com.hangman.library"
-version = "1.0.2"
+version = "1.0.3"
 project.archivesBaseName = "NativeLibDecompression"
 
 def siteUrl = 'https://github.com/HangmanFu/SoCompress'
