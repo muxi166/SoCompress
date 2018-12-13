@@ -3,9 +3,12 @@ package com.hangman.plugin
 import groovy.io.FileType
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.impldep.org.apache.commons.compress.compressors.CompressorStreamFactory
 
 class SoCompressTask extends DefaultTask {
-    private final static def SUPPORT_ALGORITHM = ['bz2', 'gz', 'lzma', 'xz', 'pack200', 'Z']
+    private final static
+    def SUPPORT_ALGORITHM = [CompressorStreamFactory.BZIP2, CompressorStreamFactory.BROTLI, CompressorStreamFactory.GZIP, CompressorStreamFactory.PACK200,
+                             CompressorStreamFactory.XZ, CompressorStreamFactory.LZMA, CompressorStreamFactory.Z, CompressorStreamFactory.LZ4_BLOCK, CompressorStreamFactory.LZ4_FRAMED]
     SoCompressConfig config
     String taskVariantName
     Set<File> inputFileDir
