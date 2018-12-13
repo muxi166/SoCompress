@@ -35,6 +35,7 @@ class SoCompressTask extends DefaultTask {
         // 找到输入输出目录
         def libInputFileDir = null
         def libOutputFileDir = null
+
         inputFileDir.each { file ->
             if (file.getAbsolutePath().contains('transforms/mergeJniLibs')) {
                 libInputFileDir = file
@@ -95,11 +96,11 @@ class SoCompressTask extends DefaultTask {
             println "compressTar compress dir ${soCompressDir.getAbsolutePath()}"
         }
         def fileMap = new HashMap<String, File>()
-        def tarFileArray = new ArrayList<File>()
+        def tarFileSet = new HashSet<File>()
         libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
-            if (fileNameSet.contains(file.name)) {
+            if (fileNameSet.contains(file.name) && file.getAbsolutePath().contains('armeabi-v7a')) {
                 fileMap[file.name] = file
-                tarFileArray.add(file)
+                tarFileSet.add(file)
             }
         }
         if (fileMap.size() != fileNameSet.size()) {
@@ -112,7 +113,7 @@ class SoCompressTask extends DefaultTask {
             throw new IllegalArgumentException("compressTar, these file (${notExistFileList}) not exist in lib dir ")
         }
         // 压缩文件列表为一个tar包
-        def info = CompressionUtil.tarFileList(tarFileArray, soCompressDir, config)
+        def info = CompressionUtil.tarFileList(tarFileSet, soCompressDir, config)
         map.put(info.fileName, info)
     }
 
@@ -132,11 +133,11 @@ class SoCompressTask extends DefaultTask {
             println "compressSoFileArray compress dir ${soCompressDir.getAbsolutePath()}"
         }
         def fileMap = new HashMap<String, File>()
-        def fileList = new ArrayList<File>()
+        def fileSet = new HashSet<File>()
         libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
-            if (fileNameSet.contains(file.name)) {
+            if (fileNameSet.contains(file.name) && file.getAbsolutePath().contains('armeabi-v7a')) {
                 fileMap[file.name] = file
-                fileList.add(file)
+                fileSet.add(file)
             }
         }
         if (fileMap.size() != fileNameSet.size()) {
@@ -148,7 +149,7 @@ class SoCompressTask extends DefaultTask {
             }
             throw new IllegalArgumentException("compressSoFileArray, but these file (${notExistFileList}) not exist in lib dir ")
         }
-        fileList.each { file ->
+        fileSet.each { file ->
             def info = CompressionUtil.compressSoFile(file, soCompressDir, config.algorithm, config.verify, config.printLog)
             map.put(file.name, info)
         }

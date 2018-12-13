@@ -14,15 +14,20 @@ import java.security.NoSuchAlgorithmException
 
 class CompressionUtil {
 
-    static def tarFileList(List<File> fileList, File outputDir, SoCompressConfig config) {
+    static def tarFileList(Set<File> fileSet, File outputDir, SoCompressConfig config) {
+        def originTotalSize = 0
         def time = System.currentTimeMillis()
         def sb = new StringBuilder()
-        fileList.eachWithIndex { file, index ->
+        fileSet.eachWithIndex { file, index ->
+            originTotalSize += file.length()
             String MD5 = getMD5(file)
             if (config.printLog) {
                 println "index = ${index} file = ${file} MD5 = ${MD5}"
             }
             sb.append(getMD5(file))
+        }
+        if (config.printLog) {
+            println "total file: ${fileSet.size()}, total size:${originTotalSize}"
         }
         def tarFileName = getMD5(sb.toString())
 
@@ -30,7 +35,7 @@ class CompressionUtil {
         File tarFile = new File(outputDir, "${tarFileName}.tar")
         try {
             tarArchiveOutputStream = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, new FileOutputStream(tarFile))
-            fileList.forEach() { file ->
+            fileSet.forEach() { file ->
                 InputStream is = null
                 try {
                     is = new FileInputStream(file)
@@ -56,7 +61,7 @@ class CompressionUtil {
         if (config.printLog) {
             println "tar file and compress cost: ${System.currentTimeMillis() - time}"
         }
-        fileList.forEach { file ->
+        fileSet.forEach { file ->
             file.delete()
         }
         return info
