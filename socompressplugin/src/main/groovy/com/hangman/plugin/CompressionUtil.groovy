@@ -78,7 +78,7 @@ class CompressionUtil {
 
         // 开始压缩so文件
         long time = System.currentTimeMillis()
-        File compressFile = new File(outputDir, "${file.name}-${MD5}")
+        File compressFile = new File(outputDir, "${file.name}^_^${MD5}")
         compressFile.delete()
         try {
             InputStream is = new FileInputStream(file)

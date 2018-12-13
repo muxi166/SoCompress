@@ -26,6 +26,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         const val SO_COMPRESSED = "so_compressed"
         const val TAR = "tar"
         const val TAG = "NativeLibDecompression"
+        const val FILE_INTERVAL = "^_^"
     }
 
     private lateinit var spInterface: SpInterface
@@ -65,7 +66,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             if (printLog) {
                 logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $pathName")
             }
-            val namePieces = pathName.split("-")
+            val namePieces = pathName.split(FILE_INTERVAL)
             val fileName = namePieces[0]
             val originMD5 = namePieces[1]
             when (fileName.contains(TAR)) {
@@ -144,7 +145,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                 logInterface?.logV(TAG, "tarDecompression2 $pathName cost : $cost")
             }
 
-            val splits = pathName.split("-")
+            val splits = pathName.split(FILE_INTERVAL)
             val fileName = splits[0]
             val originMD5 = splits[1]
             spInterface.saveString(fileName, originMD5)
@@ -163,7 +164,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             logInterface?.logV(TAG, "soDecompression $pathName fileName ${file.name}  cost $cost")
         }
         soDecompression += cost
-        val splits = pathName.split("-")
+        val splits = pathName.split(FILE_INTERVAL)
         val fileName = splits[0]
         val originMD5 = splits[1]
         spInterface.saveString(fileName, originMD5)
@@ -177,7 +178,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             if (!fileDecompressedDir.exists()) {
                 fileDecompressedDir.mkdir()
             }
-            val fileName = pathName.split("-")[0]
+            val fileName = pathName.split(FILE_INTERVAL)[0]
             val decompressedFile = File(fileDecompressedDir, fileName)
             if (decompressedFile.exists()) {
                 decompressedFile.delete()
