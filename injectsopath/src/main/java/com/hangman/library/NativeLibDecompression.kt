@@ -66,10 +66,10 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                 logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $pathName")
             }
             val namePieces = pathName.split("-")
-            when (namePieces.contains(TAR)) {
+            val fileName = namePieces[0]
+            val originMD5 = namePieces[1]
+            when (fileName.contains(TAR)) {
                 true -> {
-                    val fileName = namePieces[0]
-                    val originMD5 = namePieces[1]
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
                         decompressed = true
@@ -80,8 +80,6 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     }
                 }
                 false -> {
-                    val fileName = namePieces[0]
-                    val originMD5 = namePieces[1]
                     val value = spInterface.getString(fileName)
                     if (!TextUtils.equals(value, originMD5)) {
                         decompressed = true
