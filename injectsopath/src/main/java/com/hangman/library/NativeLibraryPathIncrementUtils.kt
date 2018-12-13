@@ -63,7 +63,7 @@ object NativeLibraryPathIncrementUtils {
     @Throws(IOException::class)
     @JvmStatic
     fun makeNativeLibraryElement(dir: File): Any {
-        when (Build.VERSION.SDK_INT >= 25 && Build.VERSION.PREVIEW_SDK_INT > 0) {
+        when (Build.VERSION.SDK_INT > 25 || Build.VERSION.SDK_INT == 25 && Build.VERSION.PREVIEW_SDK_INT > 0) {
             true -> {
                 try {
                     val nativeLibraryElement = Class.forName("dalvik.system.DexPathList\$NativeLibraryElement")
