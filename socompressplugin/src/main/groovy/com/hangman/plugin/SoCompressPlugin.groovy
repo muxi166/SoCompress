@@ -67,7 +67,9 @@ class SoCompressPlugin implements Plugin<Project> {
             if (printLog) {
                 println "add task for variant $variantName"
             }
+            def abiFilters = project.android.defaultConfig.ndk.abiFilters
             SoCompressTask task = project.tasks.create("soCompressFor$uppercaseFirstLetterName", SoCompressTask) {
+                abiFilterSet = abiFilters
                 taskVariantName = variantName
                 config = extension
                 inputFileDir = preTask.outputs.files.files

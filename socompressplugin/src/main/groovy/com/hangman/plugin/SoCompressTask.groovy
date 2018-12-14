@@ -14,6 +14,7 @@ class SoCompressTask extends DefaultTask {
     Set<File> inputFileDir
     Set<File> outputFileDir
     def map = new HashMap<String, CompressInfo>()
+    def abiFilterSet
 
     @TaskAction
     void taskAction() {
