@@ -53,10 +53,12 @@ object NativeLibraryPathIncrementUtils {
 
     @Throws(NoSuchFieldException::class, IllegalArgumentException::class, IllegalAccessException::class)
     @JvmStatic
-    fun expandFieldList(instance: Any, fieldName: String, extraElement: Any) {
+    fun expandFieldList(instance: Any, fieldName: String, vararg extraElement: Any) {
         val jlrField = findField(instance, fieldName)
         val original = jlrField.get(instance) as java.util.List<Any>
-        original.add(0, extraElement)
+        extraElement.forEach {
+            original.add(0, it)
+        }
     }
 
 

@@ -13,12 +13,12 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 class CompressionUtil {
-
-    static def tarFileList(Set<File> fileSet, File outputDir, SoCompressConfig config) {
+    static
+    def tarFileList(ArrayList<File> fileArrayList, File outputDir, String childDir, SoCompressConfig config) {
         def originTotalSize = 0
         def time = System.currentTimeMillis()
         def sb = new StringBuilder()
-        fileSet.eachWithIndex { file, index ->
+        fileArrayList.eachWithIndex { file, index ->
             originTotalSize += file.length()
             String MD5 = getMD5(file)
             if (config.printLog) {
@@ -32,10 +32,14 @@ class CompressionUtil {
         def tarFileName = getMD5(sb.toString())
 
         TarArchiveOutputStream tarArchiveOutputStream = null
-        File tarFile = new File(outputDir, "${tarFileName}.tar")
+        File abiDir = new File(outputDir, childDir)
+        if (!abiDir.exists()) {
+            abiDir.mkdir()
+        }
+        File tarFile = new File(abiDir, "${tarFileName}.tar")
         try {
             tarArchiveOutputStream = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, new FileOutputStream(tarFile))
-            fileSet.forEach() { file ->
+            fileArrayList.each { file ->
                 InputStream is = null
                 try {
                     is = new FileInputStream(file)
@@ -57,11 +61,11 @@ class CompressionUtil {
         } catch (Exception e) {
         }
         // 默认为lzma格式压缩这个tar包
-        def info = compressSoFile(tarFile, outputDir, config.algorithm, config.verify, config.printLog)
+        def info = compressSoFile(tarFile, abiDir, config.algorithm, config.verify, config.printLog)
         if (config.printLog) {
             println "tar file and compress cost: ${System.currentTimeMillis() - time}"
         }
-        fileSet.forEach { file ->
+        fileArrayList.forEach { file ->
             file.delete()
         }
         return info
@@ -78,7 +82,7 @@ class CompressionUtil {
 
         // 开始压缩so文件
         long time = System.currentTimeMillis()
-        File compressFile = new File(outputDir, "${file.name}^_^${MD5}")
+        File compressFile = new File(outputDir, "${file.name}${CompressConstant.FILE_SEPERATOR}${MD5}")
         compressFile.delete()
         try {
             InputStream is = new FileInputStream(file)

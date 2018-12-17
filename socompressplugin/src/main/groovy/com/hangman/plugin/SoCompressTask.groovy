@@ -51,16 +51,10 @@ class SoCompressTask extends DefaultTask {
             }
         }
         if (libInputFileDir == null) {
-            if (printLog) {
-                println 'libInputFileDir is null'
-            }
-            return
+            throw new IllegalStateException('libInputFileDir is null')
         }
         if (libOutputFileDir == null) {
-            if (printLog) {
-                println 'libOutputFileDir is null'
-            }
-            return
+            throw new IllegalStateException('libOutputFileDir is null')
         }
         if (printLog) {
             println "libInputFileDir ${libInputFileDir}"
@@ -76,58 +70,71 @@ class SoCompressTask extends DefaultTask {
         }
 
         if (tarFileArray.length != 0) {
+            tarFileArray.sort()
             compressTar(tarFileArray, libInputFileDir, libOutputFileDir, printLog)
         }
 
         if (compressFileArray.length != 0) {
+            compressFileArray.sort()
             compressSoFileArray(compressFileArray, libInputFileDir, libOutputFileDir, printLog)
         }
     }
 
     def compressTar(String[] fileArray, File libInputFileDir, File libOutputFileDir, boolean printLog) {
-        def fileNameSet = new HashSet<String>()
+        def fileNameArray = new ArrayList<String>()
         fileArray.each { fileName ->
-            fileNameSet.add(fileName)
+            if (!fileNameArray.contains(fileName)) {
+                fileNameArray.add(fileName)
+            }
         }
         if (printLog) {
-            println "compress tar file list ${fileNameSet}"
+            println "compress tar file list ${fileNameArray}"
         }
-        def soCompressDir = new File(libOutputFileDir, 'so_compressed')
+        def soCompressDir = new File(libOutputFileDir, CompressConstant.SO_COMPRESSED)
         if (!soCompressDir.exists()) {
             soCompressDir.mkdirs()
         }
         if (printLog) {
-            println "compressTar compress dir ${soCompressDir.getAbsolutePath()}"
+            println "compressTar -> compress dir ${soCompressDir.getAbsolutePath()}"
         }
-        def fileMap = new HashMap<String, File>()
-        def tarFileSet = new HashSet<File>()
-        libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
-            if (fileNameSet.contains(file.name) && file.getAbsolutePath().contains('armeabi-v7a')) {
-                fileMap[file.name] = file
-                tarFileSet.add(file)
-            }
-        }
-        if (fileMap.size() != fileNameSet.size()) {
-            def notExistFileList = new ArrayList<String>()
-            fileNameSet.each { it ->
-                if (fileMap.get(it) == null) {
-                    notExistFileList.add(it)
+        abiFilterSet.each { value ->
+            def fileList = new ArrayList<File>()
+            def tempMap = new HashMap<String, File>()
+            libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
+                if (fileNameArray.contains(file.name) && file.getAbsolutePath().contains(value)) {
+                    fileList.add(file)
+                    tempMap[file.name] = file
                 }
             }
-            throw new IllegalArgumentException("compressTar, these file (${notExistFileList}) not exist in lib dir ")
+            if (fileNameArray.size() != fileList.size()) {
+                def notExistFileList = new ArrayList<String>()
+                fileNameArray.each { fileName ->
+                    if (tempMap.get(fileName) == null) {
+                        notExistFileList.add(fileName)
+                    }
+                }
+                throw new IllegalStateException("compressTar -> current abiFilter is ${value}, but these file ${notExistFileList} not found in inputDir $libInputFileDir")
+            } else {
+                tempMap.clear()
+                tempMap = null
+            }
+            fileList.sort()
+            // 压缩文件列表为一个tar包
+            def info = CompressionUtil.tarFileList(fileList, soCompressDir, value, config)
+            map.put(info.fileName, info)
         }
-        // 压缩文件列表为一个tar包
-        def info = CompressionUtil.tarFileList(tarFileSet, soCompressDir, config)
-        map.put(info.fileName, info)
+
     }
 
     def compressSoFileArray(String[] fileArray, File libInputFileDir, File libOutputFileDir, boolean printLog) {
-        def fileNameSet = new HashSet<String>()
+        def fileNameList = new ArrayList<String>()
         fileArray.each { fileName ->
-            fileNameSet.add(fileName)
+            if (!fileNameList.contains(fileName)) {
+                fileNameList.add(fileName)
+            }
         }
         if (printLog) {
-            println "compress file list ${fileNameSet}"
+            println "compress file list ${fileNameList}"
         }
         def soCompressDir = new File(libOutputFileDir, 'so_compressed')
         if (!soCompressDir.exists()) {
@@ -136,26 +143,37 @@ class SoCompressTask extends DefaultTask {
         if (printLog) {
             println "compressSoFileArray compress dir ${soCompressDir.getAbsolutePath()}"
         }
-        def fileMap = new HashMap<String, File>()
-        def fileSet = new HashSet<File>()
-        libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
-            if (fileNameSet.contains(file.name) && file.getAbsolutePath().contains('armeabi-v7a')) {
-                fileMap[file.name] = file
-                fileSet.add(file)
-            }
-        }
-        if (fileMap.size() != fileNameSet.size()) {
-            def notExistFileList = new ArrayList<String>()
-            fileNameSet.each { fileName ->
-                if (fileMap.get(fileName) == null) {
-                    notExistFileList.add(fileName)
+        abiFilterSet.each { value ->
+            def fileList = new ArrayList<File>()
+            def tempMap = new HashMap<String, File>()
+            libInputFileDir.eachFileRecurse(FileType.FILES) { file ->
+                if (fileNameList.contains(file.name) && file.getAbsolutePath().contains(value)) {
+                    fileList.add(file)
+                    tempMap[file.name] = file
                 }
             }
-            throw new IllegalArgumentException("compressSoFileArray, but these file (${notExistFileList}) not exist in lib dir ")
-        }
-        fileSet.each { file ->
-            def info = CompressionUtil.compressSoFile(file, soCompressDir, config.algorithm, config.verify, config.printLog)
-            map.put(file.name, info)
+            if (fileNameList.size() != fileList.size()) {
+                def notExistFileList = new ArrayList<String>()
+                fileNameArray.each { fileName ->
+                    if (tempMap.get(fileName) == null) {
+                        notExistFileList.add(fileName)
+                    }
+                }
+                throw new IllegalStateException("compressSoFileArray -> current abiFilter is ${value}, but these file ${notExistFileList} not found in inputDir $libInputFileDir")
+            } else {
+                tempMap.clear()
+                tempMap = null
+            }
+
+            fileList.each {
+                def abiDir = new File(soCompressDir, value)
+                if (!abiDir.exists()) {
+                    abiDir.mkdir()
+                }
+                def info = CompressionUtil.compressSoFile(file, abiDir, config.algorithm, config.verify, config.printLog)
+                map.put(file.name, info)
+            }
+            fileList.clear()
         }
     }
 

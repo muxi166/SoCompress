@@ -32,6 +32,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     private lateinit var spInterface: SpInterface
     private var decompressionCallback: DecompressionCallback? = null
     private var logInterface: LogInterface? = null
+    private var abiNameList: MutableList<String> = mutableListOf()
 
     fun decompression(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
         if (isMainProcess(context.applicationContext.packageName)) {
@@ -45,7 +46,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             val handler = Handler(context.applicationContext.mainLooper)
 
             threadPool.execute {
-                shouldDecompression()
+                val decompressed = shouldDecompression()
                 val cost = System.currentTimeMillis() - time
                 logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
 
@@ -54,49 +55,65 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     injectExtraSoFilePath()
                     val cost1 = System.currentTimeMillis() - time1
                     logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost1 ")
+                    decompressionCallback?.decompression(true, decompressed)
                 }
             }
         }
     }
 
-    private fun shouldDecompression() {
+    private fun shouldDecompression(): Boolean {
         val pathList = context.applicationContext.assets.list(SO_COMPRESSED)
         var decompressed = false
-        pathList?.forEach { pathName ->
+        pathList?.forEach { abiName ->
+            abiNameList.add(abiName)
+            val fileNameArray = context.applicationContext.assets.list("$SO_COMPRESSED/$abiName")
             if (printLog) {
-                logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $pathName")
+                logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $SO_COMPRESSED/$abiName")
             }
-            val namePieces = pathName.split(FILE_INTERVAL)
-            val fileName = namePieces[0]
-            val originMD5 = namePieces[1]
-            when (fileName.contains(TAR)) {
-                true -> {
-                    val value = spInterface.getString(fileName)
-                    if (!TextUtils.equals(value, originMD5)) {
-                        decompressed = true
-                        tarDecompression(pathName)
-                        if (printLog) {
-                            logInterface?.logV(TAG, "methodName = shouldDecompression tarDecompression $pathName")
+            fileNameArray?.forEach {
+                val namePieces = it.split(FILE_INTERVAL)
+                val fileName = namePieces[0]
+                val originMD5 = namePieces[1]
+                when (fileName.contains(TAR)) {
+                    true -> {
+                        val value = spInterface.getString(fileName)
+                        if (!TextUtils.equals(value, originMD5)) {
+                            decompressed = true
+                            tarDecompression("$SO_COMPRESSED/$abiName/$it", abiName, it)
+                            if (printLog) {
+                                logInterface?.logV(TAG, "methodName = shouldDecompression tarDecompression $abiName")
+                            }
                         }
                     }
-                }
-                false -> {
-                    val value = spInterface.getString(fileName)
-                    if (!TextUtils.equals(value, originMD5)) {
-                        decompressed = true
-                        soDecompression(pathName)
-                        if (printLog) {
-                            logInterface?.logV(TAG, "methodName = shouldDecompression soDecompression $pathName")
+                    false -> {
+                        val value = spInterface.getString(fileName)
+                        if (!TextUtils.equals(value, originMD5)) {
+                            decompressed = true
+                            soDecompression("$SO_COMPRESSED/$abiName/$it", abiName, it)
+                            if (printLog) {
+                                logInterface?.logV(TAG, "methodName = shouldDecompression soDecompression $abiName")
+                            }
                         }
                     }
                 }
             }
         }
-        decompressionCallback?.decompression(true, decompressed)
+        return decompressed
     }
 
     private fun injectExtraSoFilePath() {
-        val fileDecompressedDir = File(context.applicationContext.filesDir, SO_DECOMPRESSION)
+        val nativeLibraryElementArray: Array<Any> = arrayOf()
+        val nativeLibraryDirectories: Array<File> = arrayOf()
+        val i = 0
+        abiNameList.forEach {
+            val fileDecompressedDir = File(context.applicationContext.filesDir, "$SO_DECOMPRESSION/$it")
+            nativeLibraryElementArray[i] = NativeLibraryPathIncrementUtils.makeNativeLibraryElement(fileDecompressedDir)
+            nativeLibraryDirectories[i] = fileDecompressedDir
+            i.inc()
+        }
+        if (printLog) {
+            logInterface?.logV(TAG, "nativeLibraryElementArray $nativeLibraryElementArray")
+        }
         val classLoader = context.applicationContext.classLoader
         if (printLog) {
             logInterface?.logV(TAG, "injectExtraSoFilePath classLoader $classLoader")
@@ -105,9 +122,8 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             val dexPathListField = NativeLibraryPathIncrementUtils.findField(classLoader, "pathList")
             dexPathListField.isAccessible = true
             val dexPathListInstance = dexPathListField.get(classLoader)
-            NativeLibraryPathIncrementUtils.expandFieldArray(dexPathListInstance, "nativeLibraryPathElements",
-                    arrayOf(NativeLibraryPathIncrementUtils.makeNativeLibraryElement(fileDecompressedDir.absoluteFile)))
-            NativeLibraryPathIncrementUtils.expandFieldList(dexPathListInstance, "nativeLibraryDirectories", fileDecompressedDir)
+            NativeLibraryPathIncrementUtils.expandFieldArray(dexPathListInstance, "nativeLibraryPathElements", nativeLibraryElementArray)
+            NativeLibraryPathIncrementUtils.expandFieldList(dexPathListInstance, "nativeLibraryDirectories", nativeLibraryDirectories)
             dexPathListField.set(classLoader, dexPathListInstance)
         } catch (e: NoSuchFieldException) {
             logInterface?.logV(TAG, "NoSuchFieldException $e")
@@ -124,11 +140,11 @@ class NativeLibDecompression(private val context: Context, private val algorithm
 
     }
 
-    private fun tarDecompression(pathName: String) {
+    private fun tarDecompression(pathName: String, abiName: String, fileName: String) {
         try {
             // decompression
             var time = System.currentTimeMillis()
-            val file = fileDecompression(pathName)
+            val file = fileDecompression(pathName, abiName, fileName)
                     ?: throw IllegalStateException("tar decompression failed $pathName")
             var cost = System.currentTimeMillis() - time
             if (printLog) {
@@ -138,48 +154,49 @@ class NativeLibDecompression(private val context: Context, private val algorithm
 
             // tar decompression
             time = System.currentTimeMillis()
-            tarDecompression(file.absolutePath, file.parent)
+            untar(file.absolutePath, file.parent)
+            file.delete()
             cost = System.currentTimeMillis() - time
             tarDecompression += cost
             if (printLog) {
                 logInterface?.logV(TAG, "tarDecompression2 $pathName cost : $cost")
             }
 
-            val splits = pathName.split(FILE_INTERVAL)
-            val fileName = splits[0]
+            val splits = fileName.split(FILE_INTERVAL)
+            val name = splits[0]
             val originMD5 = splits[1]
-            spInterface.saveString(fileName, originMD5)
+            spInterface.saveString(name, originMD5)
         } catch (e: Exception) {
             decompressionCallback?.decompression(false, true)
         }
 
     }
 
-    private fun soDecompression(pathName: String) {
+    private fun soDecompression(pathName: String, abiName: String, fileName: String) {
         val time = System.currentTimeMillis()
-        val file = fileDecompression(pathName)
+        val file = fileDecompression(pathName, abiName, fileName)
                 ?: throw IllegalStateException("soDecompression failed $pathName")
         val cost = System.currentTimeMillis() - time
         if (printLog) {
             logInterface?.logV(TAG, "soDecompression $pathName fileName ${file.name}  cost $cost")
         }
         soDecompression += cost
-        val splits = pathName.split(FILE_INTERVAL)
-        val fileName = splits[0]
+        val splits = fileName.split(FILE_INTERVAL)
+        val name = splits[0]
         val originMD5 = splits[1]
-        spInterface.saveString(fileName, originMD5)
+        spInterface.saveString(name, originMD5)
     }
 
-    private fun fileDecompression(pathName: String): File? {
+    private fun fileDecompression(pathName: String, abiName: String, fileName: String): File? {
         var file: File? = null
         try {
-            val inputStream = context.applicationContext.assets.open(SO_COMPRESSED + File.separatorChar + pathName)
-            val fileDecompressedDir = File(context.applicationContext.filesDir, SO_DECOMPRESSION)
+            val inputStream = context.applicationContext.assets.open(pathName)
+            val fileDecompressedDir = File(context.applicationContext.filesDir, "$SO_DECOMPRESSION/$abiName")
             if (!fileDecompressedDir.exists()) {
-                fileDecompressedDir.mkdir()
+                fileDecompressedDir.mkdirs()
             }
-            val fileName = pathName.split(FILE_INTERVAL)[0]
-            val decompressedFile = File(fileDecompressedDir, fileName)
+            val name = fileName.split(FILE_INTERVAL)[0]
+            val decompressedFile = File(fileDecompressedDir, name)
             if (decompressedFile.exists()) {
                 decompressedFile.delete()
             }
@@ -201,7 +218,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         return file
     }
 
-    private fun tarDecompression(tarPath: String, unTarPath: String) {
+    private fun untar(tarPath: String, unTarPath: String) {
         val time = System.currentTimeMillis()
         val tarFile = File(tarPath)
         try {
