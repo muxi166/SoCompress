@@ -58,14 +58,10 @@ class SoCompressTask extends DefaultTask {
             if (printLog) {
                 println "outputFileDir ${file.getAbsolutePath()}"
             }
-            if (gradleVersion >= 320) {
-                file.getAbsolutePath().contains('intermediates/merged_assets') {
-                    libOutputFileDir = file
-                }
-            } else {
-                if (file.getAbsolutePath().contains('intermediates/assets')) {
-                    libOutputFileDir = file
-                }
+            if (gradleVersion >= 320 && file.getAbsolutePath().contains('intermediates/merged_assets')) {
+                libOutputFileDir = file
+            } else if (gradleVersion < 320 && file.getAbsolutePath().contains('intermediates/assets')) {
+                libOutputFileDir = file
             }
         }
         if (libInputFileDir == null) {
