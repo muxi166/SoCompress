@@ -5,7 +5,7 @@ apply plugin: 'signing'
 apply plugin: 'maven'
 
 group = "com.hangman.plugin"
-version = "1.0.7"
+version = "1.0.9"
 project.archivesBaseName = "nativelibcompressionplugin"
 
 def siteUrl = 'https://github.com/HangmanFu/SoCompress'

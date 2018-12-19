@@ -35,18 +35,37 @@ class SoCompressTask extends DefaultTask {
         if (!SUPPORT_ALGORITHM.contains(config.algorithm)) {
             throw new IllegalArgumentException("only support one of ${Arrays.asList(SUPPORT_ALGORITHM).toString()}")
         }
+
+        def gradleVersion = 0
+        project.rootProject.buildscript.configurations.classpath.resolvedConfiguration.resolvedArtifacts.each {
+            if (it.name == 'gradle') {
+                gradleVersion = it.moduleVersion.id.version.replace('.', '').toInteger()
+            }
+        }
         // 找到输入输出目录
         def libInputFileDir = null
         def libOutputFileDir = null
 
         inputFileDir.each { file ->
+            if (printLog) {
+                println "inputFileDir ${file.getAbsolutePath()}"
+            }
             if (file.getAbsolutePath().contains('transforms/mergeJniLibs')) {
                 libInputFileDir = file
             }
         }
         outputFileDir.forEach { file ->
-            if (file.getAbsolutePath().contains('intermediates/assets')) {
-                libOutputFileDir = file
+            if (printLog) {
+                println "outputFileDir ${file.getAbsolutePath()}"
+            }
+            if (gradleVersion >= 320) {
+                file.getAbsolutePath().contains('intermediates/merged_assets') {
+                    libOutputFileDir = file
+                }
+            } else {
+                if (file.getAbsolutePath().contains('intermediates/assets')) {
+                    libOutputFileDir = file
+                }
             }
         }
         if (libInputFileDir == null) {
