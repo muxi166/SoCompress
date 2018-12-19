@@ -27,7 +27,7 @@ class CompressionUtil {
             sb.append(getMD5(file))
         }
         if (config.printLog) {
-            println "total file: ${fileSet.size()}, total size:${originTotalSize}"
+            println "total file: ${fileArrayList.size()}, total size:${originTotalSize}"
         }
         def tarFileName = getMD5(sb.toString())
 
