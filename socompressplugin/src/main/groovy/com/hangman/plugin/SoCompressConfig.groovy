@@ -3,6 +3,7 @@ package com.hangman.plugin
 class SoCompressConfig {
     public String[] tarFileNameArray
     public String[] compressFileNameArray
+    public String[] abiFilters
     public String algorithm
     public boolean debugModeEnable
     public boolean printLog
@@ -15,6 +16,7 @@ class SoCompressConfig {
         debugModeEnable = false
         printLog = false
         verify = true
+        abiFilters = ['armeabi-v7a']
     }
 
     String[] getTarFileNameArray() {

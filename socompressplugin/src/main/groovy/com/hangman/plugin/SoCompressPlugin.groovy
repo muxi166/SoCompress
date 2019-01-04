@@ -60,6 +60,7 @@ class SoCompressPlugin implements Plugin<Project> {
         def followTask = project.tasks.getByName("package${uppercaseFirstLetterName}")
         def printLog = extension.printLog
         def debugModeEnable = extension.debugModeEnable
+        def abiFilters = extension.abiFilters
         if (preTask == null || followTask == null) {
             return
         }
@@ -67,7 +68,10 @@ class SoCompressPlugin implements Plugin<Project> {
             if (printLog) {
                 println "add task for variant $variantName"
             }
-            def abiFilters = project.android.defaultConfig.ndk.abiFilters
+            //def abiFilters = project.android.defaultConfig.ndk.abiFilters
+            //if (printLog) {
+            //    println "abiFilters =  $abiFilters"
+            //}
             SoCompressTask task = project.tasks.create("soCompressFor$uppercaseFirstLetterName", SoCompressTask) {
                 abiFilterSet = abiFilters
                 taskVariantName = variantName

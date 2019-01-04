@@ -213,7 +213,7 @@ class SoCompressTask extends DefaultTask {
                             notExistFileList.add(fileName)
                         }
                     }
-                    throw new IllegalStateException("compressSoFileArray -> current abiFilter is ${value}, but these file ${notExistFileList} not found in inputDir $libInputFileDir")
+                    throw new IllegalStateException("compressSoFileArray1 -> current abiFilter is ${value}, but these file ${notExistFileList} not found in inputDir $libInputFileDir")
                 } else {
                     tempMap.clear()
                     tempMap = null
@@ -252,7 +252,7 @@ class SoCompressTask extends DefaultTask {
                     fileList.each { file ->
                         tempFileNameArray.remove(file.getName())
                     }
-                    throw new IllegalStateException("compressSoFileArray -> current abiFilter is ${abiFilterName}, but these file ${tempFileNameArray} not found in inputDir $libInputFileDir")
+                    throw new IllegalStateException("compressSoFileArray2 -> current abiFilter is ${abiFilterName}, but these file ${tempFileNameArray} not found in inputDir $libInputFileDir")
                 }
                 fileList.each { file ->
                     def abiDir = new File(soCompressDir, abiFilterName)
