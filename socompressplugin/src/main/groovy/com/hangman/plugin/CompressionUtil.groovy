@@ -13,8 +13,8 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 class CompressionUtil {
-    static
-    def tarFileList(ArrayList<File> fileArrayList, File outputDir, String childDir, SoCompressConfig config) {
+
+    static def tarFileList(ArrayList<File> fileArrayList, File outputDir, String childDir, SoCompressConfig config) {
         def originTotalSize = 0
         def time = System.currentTimeMillis()
         def sb = new StringBuilder()
@@ -44,6 +44,7 @@ class CompressionUtil {
                 try {
                     is = new FileInputStream(file)
                     TarArchiveEntry entry = new TarArchiveEntry(file, file.getName())
+                    entry.setModTime(CompressConstant.TIME)
                     tarArchiveOutputStream.putArchiveEntry(entry)
                     IOUtils.copy(is, tarArchiveOutputStream)
                     tarArchiveOutputStream.closeArchiveEntry()
@@ -79,10 +80,13 @@ class CompressionUtil {
         info.setOriginFileLength(file.length())
         def MD5 = getMD5(file)
         info.setOriginMd5String(MD5)
+        if (printLog) {
+            println "fileName ${file.name} filePath ${file.absolutePath} fileMd5 ${MD5}"
+        }
 
         // 开始压缩so文件
         long time = System.currentTimeMillis()
-        File compressFile = new File(outputDir, "${file.name}${CompressConstant.FILE_SEPERATOR}${MD5}")
+        File compressFile = new File(outputDir, "${file.name}${CompressConstant.FILE_SEPARATOR}${MD5}")
         compressFile.delete()
         try {
             InputStream is = new FileInputStream(file)

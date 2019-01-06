@@ -83,6 +83,9 @@ class SoCompressTask extends DefaultTask {
             }
         }
 
+        def soCompressDir = new File(libOutputFileDir, CompressConstant.SO_COMPRESSED)
+        soCompressDir.deleteDir()
+
         if (tarFileArray.length != 0) {
             tarFileArray.sort()
             compressTar(tarFileArray, libInputFileDir, libOutputFileDir, printLog)
