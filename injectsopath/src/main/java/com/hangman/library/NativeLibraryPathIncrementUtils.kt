@@ -5,10 +5,8 @@ import android.util.Log
 import dalvik.system.DexFile
 import java.io.File
 import java.io.IOException
-import java.lang.ClassCastException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
-import java.util.*
 
 
 // 本部分反射内容借鉴自atlas
@@ -16,7 +14,6 @@ object NativeLibraryPathIncrementUtils {
 
     private val constructorArgs = arrayOf<Class<*>>(File::class.java)
     private val constructorArgs1 = arrayOf<Class<*>>(File::class.java, Boolean::class.java, File::class.java, DexFile::class.java)
-
 
     @Throws(NoSuchFieldException::class)
     @JvmStatic
@@ -53,8 +50,9 @@ object NativeLibraryPathIncrementUtils {
 
     @Throws(NoSuchFieldException::class, IllegalArgumentException::class, IllegalAccessException::class)
     @JvmStatic
-    fun expandFieldList(instance: Any, fieldName: String, vararg extraElement: Any) {
+    fun expandFieldList(instance: Any, fieldName: String, extraElement: Array<Any>) {
         val jlrField = findField(instance, fieldName)
+        jlrField.isAccessible = true
         val original = jlrField.get(instance) as java.util.List<Any>
         extraElement.forEach {
             original.add(0, it)

@@ -13,7 +13,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.concurrent.Executors
-import java.util.concurrent.FutureTask
 
 class NativeLibDecompression(private val context: Context, private val algorithm: String, private val printLog: Boolean) {
 
@@ -32,7 +31,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     private lateinit var spInterface: SpInterface
     private var decompressionCallback: DecompressionCallback? = null
     private var logInterface: LogInterface? = null
-    private var abiNameList: MutableList<String> = mutableListOf()
+    private var abiNameList = arrayListOf<String>()
 
     fun decompression(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
         if (isMainProcess(context.applicationContext.packageName)) {
@@ -71,6 +70,9 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                 logInterface?.logV(TAG, "methodName = shouldDecompression pathName = $SO_COMPRESSED/$abiName")
             }
             fileNameArray?.forEach {
+                if (printLog) {
+                    logInterface?.logV(TAG, "fileName = $it")
+                }
                 val namePieces = it.split(FILE_INTERVAL)
                 val fileName = namePieces[0]
                 val originMD5 = namePieces[1]
@@ -102,14 +104,14 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     }
 
     private fun injectExtraSoFilePath() {
-        val nativeLibraryElementArray: Array<Any> = arrayOf()
-        val nativeLibraryDirectories: Array<File> = arrayOf()
-        val i = 0
+        val nativeLibraryElementArray = arrayOf<Any>(abiNameList.size)
+        val nativeLibraryDirectories = arrayOfNulls<File?>(abiNameList.size)
+        val index = 0
         abiNameList.forEach {
             val fileDecompressedDir = File(context.applicationContext.filesDir, "$SO_DECOMPRESSION/$it")
-            nativeLibraryElementArray[i] = NativeLibraryPathIncrementUtils.makeNativeLibraryElement(fileDecompressedDir)
-            nativeLibraryDirectories[i] = fileDecompressedDir
-            i.inc()
+            nativeLibraryElementArray[index] = NativeLibraryPathIncrementUtils.makeNativeLibraryElement(fileDecompressedDir)
+            nativeLibraryDirectories[index] = fileDecompressedDir
+            index.inc()
         }
         if (printLog) {
             logInterface?.logV(TAG, "nativeLibraryElementArray $nativeLibraryElementArray")
@@ -123,7 +125,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             dexPathListField.isAccessible = true
             val dexPathListInstance = dexPathListField.get(classLoader)
             NativeLibraryPathIncrementUtils.expandFieldArray(dexPathListInstance, "nativeLibraryPathElements", nativeLibraryElementArray)
-            NativeLibraryPathIncrementUtils.expandFieldList(dexPathListInstance, "nativeLibraryDirectories", nativeLibraryDirectories)
+            NativeLibraryPathIncrementUtils.expandFieldList(dexPathListInstance, "nativeLibraryDirectories", nativeLibraryDirectories as Array<Any>)
             dexPathListField.set(classLoader, dexPathListInstance)
         } catch (e: NoSuchFieldException) {
             logInterface?.logV(TAG, "NoSuchFieldException $e")
@@ -137,7 +139,6 @@ class NativeLibDecompression(private val context: Context, private val algorithm
         if (printLog) {
             logInterface?.logV(TAG, "injectExtraSoFilePath classLoader $classLoader")
         }
-
     }
 
     private fun tarDecompression(pathName: String, abiName: String, fileName: String) {
