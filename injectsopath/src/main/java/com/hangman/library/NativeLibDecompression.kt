@@ -33,7 +33,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
     private var logInterface: LogInterface? = null
     private var abiNameList = arrayListOf<String>()
 
-    fun decompression(spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
+    fun decompression(async: Boolean, spInterface: SpInterface, logInterface: LogInterface?, decompressionCallback: DecompressionCallback?) {
         if (isMainProcess(context.applicationContext.packageName)) {
             if (printLog) {
                 logInterface?.logE(TAG, "======= decompression function invoke ======")
@@ -44,7 +44,7 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             this.decompressionCallback = decompressionCallback
             val handler = Handler(context.applicationContext.mainLooper)
 
-            threadPool.execute {
+            val runnable = Runnable {
                 val decompressed = shouldDecompression()
                 val cost = System.currentTimeMillis() - time
                 logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
@@ -56,6 +56,11 @@ class NativeLibDecompression(private val context: Context, private val algorithm
                     logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost1 ")
                     decompressionCallback?.decompression(true, decompressed)
                 }
+            }
+            if (async) {
+                threadPool.execute(runnable)
+            } else {
+                runnable.run()
             }
         }
     }
