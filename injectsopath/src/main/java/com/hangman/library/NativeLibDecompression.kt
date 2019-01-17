@@ -42,20 +42,17 @@ class NativeLibDecompression(private val context: Context, private val algorithm
             this.spInterface = spInterface
             this.logInterface = logInterface
             this.decompressionCallback = decompressionCallback
-            val handler = Handler(context.applicationContext.mainLooper)
 
             val runnable = Runnable {
                 val decompressed = shouldDecompression()
                 val cost = System.currentTimeMillis() - time
                 logInterface?.logV(TAG, "NativeLibDecompression shouldDecompression cost $cost")
 
-                handler.post {
-                    val time1 = System.currentTimeMillis()
-                    injectExtraSoFilePath()
-                    val cost1 = System.currentTimeMillis() - time1
-                    logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost1 ")
-                    decompressionCallback?.decompression(true, decompressed)
-                }
+                val time1 = System.currentTimeMillis()
+                injectExtraSoFilePath()
+                val cost1 = System.currentTimeMillis() - time1
+                logInterface?.logV(TAG, "NativeLibDecompression injectExtraSoFilePath cost $cost1 ")
+                decompressionCallback?.decompression(true, decompressed)
             }
             if (async) {
                 threadPool.execute(runnable)
